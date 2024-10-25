@@ -1,7 +1,12 @@
-# churn_telecom_Interconnect
-Construcción de un modelo de aprendizaje que predice la tasa de abandono por parte de los clientes en telecom Interconnect
+# Predicción de Tasa de Abandono de Clientes en Telecom Interconnect
 
-<!-- TODO Agregar más detalles en tu README. Tiene que ser fácil entender de qué se trata el proyecto y cómo utilizarlo -->
-<!-- TODO Comiteaste la carpeta catboost_info. Esa carpeta no tiene códigos hechos por ti, por lo que no debería comitearse. Solo tiene archivos generados automáticamente -->
-<!-- TODO En ninguna parte de tu script vi que guardases un output. Algún dataset, o gráfico, o modelo. Cómo piensas usar lo que hiciste? -->
-<!-- TODO Transformaste tu JN a un script, ese es un buen primer paso. Ahora modulariza el código y sepáralo en scripts distintos. Uno o varios para preproceso. Otro para entrenar el modelo, otro para aplicar el modelo a datos nuevos, etc (estos son ejemplos) -->
+Este proyecto, a través de pipelines que mejoran el flujo de trabajo, busca entre varios modelos de aprendizaje automático con la intención de observar el comportamiento y efectividad de cada uno de ellos para luego proceder a entrenar el más óptimo según lo arrojado por las respectivas métricas que evalúan la calidad del mismo, esto con la intención de que pueda predecir la probabilidad de abandono de clientes en una empresa de telecomunicaciones de manera objetiva y confiable. Mediante el análisis de datos de clientes y contratos, se busca identificar aquellos con mayor riesgo de dejar el servicio.
+
+## Outputs del Proyecto
+
+El proyecto genera varios outputs importantes que se guardan en la carpeta `outputs/`:
+- **Datos Preprocesados**: Carpeta donde se almacenan los datos una vez hecho el respectivo encodificado y escalado.
+- **Modelos Entrenados**: Los mejores modelos entrenados se guardan en `outputs/models/`. Esto permite cargar los modelos para hacer predicciones sin tener que volver a entrenarlos.
+- **Gráficas ROC**: Las gráficas ROC de cada modelo se almacenan en `outputs/plots/`. Estas gráficas permiten visualizar el rendimiento de cada modelo en términos de sus tasas de verdaderos positivos y falsos positivos.
+- **Reportes de Clasificación**: Los reportes de clasificación, que incluyen precisión, recall y F1-score para cada clase, se guardan en `outputs/reports/`. Cada archivo contiene el reporte de clasificación de un modelo específico.
+- **Métricas de Evaluación**: El archivo `outputs/metrics/model_metrics.csv` contiene las métricas de AUC-ROC para todos los modelos, facilitando la comparación de su rendimiento.

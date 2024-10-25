@@ -1,5 +1,7 @@
 #INTERCONNECT_PROJECT
 #Importando librerías necesarias
+import os
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -27,12 +29,20 @@ from boruta import BorutaPy
 
 from IPython.display import display, HTML
 
+from joblib import dump
+
+#carpetas para guardado de gráficos, modelos, métricas y reportes de clasificación
+os.makedirs('outputs/models', exist_ok=True)
+os.makedirs('outputs/plots', exist_ok=True)
+os.makedirs('outputs/metrics', exist_ok=True)
+os.makedirs('outputs/reports', exist_ok=True)
+os.makedirs('outputs/preprocessed', exist_ok=True)
 
 #cargamos los datasets
-df_contract = pd.read_csv('/home/nick/datasets/contract.csv') # TODO No ocupes rutas absolutas, sino que rutas relativas. Yo no tengo una carpeta llemada `nick`. 
-df_personal = pd.read_csv('/home/nick/datasets/personal.csv') # TODO Además, es bueno que mantengas la estructura de carpetas de tu proyecto y comitees algunos READMEs o .gitkeep en carpetas, para que al clonar el repo de 0, esas carpetas ya estén creadas
-df_internet = pd.read_csv('/home/nick/datasets/internet.csv')
-df_phone = pd.read_csv('/home/nick/datasets/phone.csv')
+df_contract = pd.read_csv('datasets/contract.csv') 
+df_personal = pd.read_csv('datasets/personal.csv')
+df_internet = pd.read_csv('datasets/internet.csv')
+df_phone = pd.read_csv('datasets/phone.csv')
 
 pd.set_option('display.max_columns', None)#Para observar todas las columnas en DataFrames
 
@@ -226,6 +236,8 @@ def plot_groupby_target(data, groupby_col, colors=None):
     plt.title(f'{groupby_col.capitalize()} vs Abandono')
     plt.xticks(ind + width, group_data.index.tolist())
     plt.legend()
+
+    plt.savefig(f'outputs/plots/{groupby_col}_vs_abandono.png')#Guardar
     plt.show()
 
 #Contratos de servicios de clientes Interconnect
@@ -365,6 +377,14 @@ smote = SMOTE(random_state=12345)
 feature_train_balanced, target_train_balanced = smote.fit_resample(features_train_OHE, train_target)
 print(f'Clases después de SMOTE: \n {target_train_balanced.value_counts()}')
 
+#Guardado de datos preprocesados como archivos CSV
+features_train_OHE.to_csv('outputs/preprocessed/features_train_OHE.csv', index=False)
+features_valid_OHE.to_csv('outputs/preprocessed/features_valid_OHE.csv', index=False)
+features_test_OHE.to_csv('outputs/preprocessed/features_test_OHE.csv', index=False)
+target_train_balanced.to_csv('outputs/preprocessed/target_train_balanced.csv', index=False)
+feature_train_balanced.to_csv('outputs/preprocessed/feature_train_balanced.csv', index=False)
+
+
 print()
 
 
@@ -469,6 +489,22 @@ print()
 #9 .- ENTRENAMIENTO DE MODELOS
 #Entrenando el modelo con la métrica AUC-ROC >= 0.88
 
+#función gráficas ROC para cada modelo que permite evaluar el rendimiento de cada uno
+def plot_roc_curve(fpr, tpr, roc_auc, model_name):
+    plt.figure()
+    plt.plot(fpr, tpr, color='darkorange', lw=2, label='ROC curve (area = %0.2f)' % roc_auc)
+    plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('Falsos Positivos')
+    plt.ylabel('Verdaderos positivos')
+    plt.title(f'Curva ROC - {model_name}')
+    plt.legend(loc="lower right")
+    
+    plt.savefig(f'outputs/plots/best_roc_curve_{model_name}.png') #Guardado de curva para análisis posterior
+    plt.show()
+
+
 #GB_model
 gb_model = GradientBoostingClassifier()
 
@@ -506,18 +542,7 @@ print(roc_auc_score(test_target, y_pred_proba))
 
 fpr, tpr, _ = roc_curve(test_target, y_pred_proba)
 roc_auc = auc(fpr, tpr)
-
-plt.figure()
-plt.plot(fpr, tpr, color='darkorange', lw=2, label='ROC curve (area = %0.2f)' % roc_auc)
-plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
-plt.xlim([0.0, 1.0])
-plt.ylim([0.0, 1.05])
-plt.xlabel('Falsos Positivos')
-plt.ylabel('Verdaderos positivos')
-plt.title('Curva ROC')
-plt.legend(loc="lower right")
-plt.show()
-
+plot_roc_curve(fpr, tpr, roc_auc, "Gradient Boosting")
 
 
 #MLP_model
@@ -558,18 +583,7 @@ print(roc_auc_score(test_target, y_pred_proba))
 
 fpr, tpr, _ = roc_curve(test_target, y_pred_proba)
 roc_auc = auc(fpr, tpr)
-
-plt.figure()
-plt.plot(fpr, tpr, color='darkorange', lw=2, label='ROC curve (area = %0.2f)' % roc_auc)
-plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
-plt.xlim([0.0, 1.0])
-plt.ylim([0.0, 1.05])
-plt.xlabel('Falso Positivo')
-plt.ylabel('Verdadero Positivo')
-plt.title('Curva ROC')
-plt.legend(loc="lower right")
-plt.show()
-
+plot_roc_curve(fpr, tpr, roc_auc, "Multi-Layer Perceptron (MLP)")
 
 
 #rf_model
@@ -610,17 +624,7 @@ print(roc_auc_score(test_target, y_pred_proba))
 
 fpr, tpr, _ = roc_curve(test_target, y_pred_proba)
 roc_auc = auc(fpr, tpr)
-
-plt.figure()
-plt.plot(fpr, tpr, color='darkorange', lw=2, label='ROC curve (area = %0.2f)' % roc_auc)
-plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
-plt.xlim([0.0, 1.0])
-plt.ylim([0.0, 1.05])
-plt.xlabel('Falso Positivo')
-plt.ylabel('Verdadero Positivo')
-plt.title('Curva ROC')
-plt.legend(loc="lower right")
-plt.show()
+plot_roc_curve(fpr, tpr, roc_auc, "Random Forest")
 
 
 #MODELOS EXCLUDOS
@@ -662,17 +666,8 @@ print(roc_auc_score(test_target, y_pred_proba))
 
 fpr, tpr, _ = roc_curve(test_target, y_pred_proba)
 roc_auc = auc(fpr, tpr)
+plot_roc_curve(fpr, tpr, roc_auc, "XGBoost")
 
-plt.figure()
-plt.plot(fpr, tpr, color='darkorange', lw=2, label='ROC curve (area = %0.2f)' % roc_auc)
-plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
-plt.xlim([0.0, 1.0])
-plt.ylim([0.0, 1.05])
-plt.xlabel('Falsos Positivos')
-plt.ylabel('Verdaderos Positivos')
-plt.title('Curva ROC')
-plt.legend(loc="lower right")
-plt.show()
 
 #cb_model
 cb_model = CatBoostClassifier(silent=True)
@@ -711,17 +706,45 @@ print(roc_auc_score(test_target, y_pred_proba))
 
 fpr, tpr, _ = roc_curve(test_target, y_pred_proba)
 roc_auc = auc(fpr, tpr)
+plot_roc_curve(fpr, tpr, roc_auc, "CatBoost")
 
-plt.figure()
-plt.plot(fpr, tpr, color='darkorange', lw=2, label='ROC curve (area = %0.2f)' % roc_auc)
-plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
-plt.xlim([0.0, 1.0])
-plt.ylim([0.0, 1.05])
-plt.xlabel('Falsos Positivos')
-plt.ylabel('Verdaderos Positivos')
-plt.title('Curva ROC')
-plt.legend(loc="lower right")
-plt.show()
+
+#Guardado de mejores modelos para uso futuro en predicciones y comparaciones
+models = {
+    'best_gb_model': best_gb,
+    'best_mlp_model': best_mlp,
+    'best_rf_model': best_rf,
+    'best_xgb_model': best_xgb,
+    'best_cb_model': best_catboost
+}
+
+for name, model in models.items():
+    dump(model, f"outputs/models/{name}.joblib")
+    print(f"Modelo {name} guardado como outputs/models/{name}.joblib")
+
+#Guardado de reportes de clasificación y métricas de evaluación para evaluar rendimiento
+metrics = {
+    'Model': [],
+    'AUC-ROC': [],
+}
+
+for name, model in models.items():
+    y_pred = model.predict(feature_test_selected)
+    report = classification_report(test_target, y_pred, output_dict=True)
+    
+    pd.DataFrame(report).transpose().to_csv(f"outputs/reports/{name}_classification_report.csv")
+    print(f"Reporte de clasificación para {name} guardado en outputs/reports/{name}_classification_report.csv")
+
+    y_pred_proba = model.predict_proba(feature_test_selected)[:, 1]
+    auc_score = roc_auc_score(test_target, y_pred_proba)
+    
+    metrics['Model'].append(name)
+    metrics['AUC-ROC'].append(auc_score)
+
+#Guardar las métricas en un CSV
+metrics_df = pd.DataFrame(metrics)
+metrics_df.to_csv('outputs/metrics/model_metrics.csv', index=False)#Guardado para posibles evaluaciones comparativas
+print("Métricas de los modelos guardadas en outputs/metrics/model_metrics.csv.")
 
 
 #RED NEURONAL

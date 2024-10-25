@@ -1,0 +1,6 @@
+Model,AUC-ROC
+best_gb_model,0.9680393168318966
+best_mlp_model,1.0
+best_rf_model,0.8932089560903438
+best_xgb_model,0.9667721020340124
+best_cb_model,0.9633453143737652
